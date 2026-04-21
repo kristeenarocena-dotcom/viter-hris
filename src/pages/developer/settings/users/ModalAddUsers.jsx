@@ -43,10 +43,17 @@ const ModalAddUsers = ({ itemEdit, filterArrayActiveRoles }) => {
         dispatch(setMessage(`Successfully ${itemEdit ? "updated" : "added"}`));
         dispatch(setIsAdd(false));
       }
-      if (data.success == false) {
-        dispatch(setError(true));
-        dispatch(setMessage(data.error));
+    },
+    onError: (error) => {
+      if (
+        error.message === "User already exist." ||
+        error.message === "User already exist" ||
+        error.message === "Email already used"
+      ) {
+        return;
       }
+      dispatch(setError(true));
+      dispatch(setMessage(error.message || "Something went wrong."));
     },
   });
 
@@ -57,7 +64,8 @@ const ModalAddUsers = ({ itemEdit, filterArrayActiveRoles }) => {
     users_last_name: itemEdit ? itemEdit.users_last_name : "",
     users_password: itemEdit ? itemEdit.users_password : "",
     users_email: itemEdit ? itemEdit.users_email : "",
-
+    users_first_name_old: itemEdit ? itemEdit.users_first_name : "",
+    users_last_name_old: itemEdit ? itemEdit.users_last_name : "",
     users_email_old: itemEdit ? itemEdit.users_email : "",
   };
   const yupSchema = Yup.object({
@@ -101,9 +109,27 @@ const ModalAddUsers = ({ itemEdit, filterArrayActiveRoles }) => {
           <Formik
             initialValues={initVal}
             validationSchema={yupSchema}
-            onSubmit={async (values, { setSubmitting, resetForm }) => {
+            onSubmit={async (values, { setFieldError, setFieldTouched }) => {
               dispatch(setError(false));
-              mutation.mutate(values);
+              try {
+                await mutation.mutateAsync(values);
+              } catch (error) {
+                if (
+                  error.message === "User already exist." ||
+                  error.message === "User already exist"
+                ) {
+                  setFieldTouched("users_first_name", true, false);
+                  setFieldTouched("users_last_name", true, false);
+                  setFieldError("users_first_name", "User already exist.");
+                  setFieldError("users_last_name", "User already exist.");
+                  return;
+                }
+
+                if (error.message === "Email already used") {
+                  setFieldTouched("users_email", true, false);
+                  setFieldError("users_email", "Email already used");
+                }
+              }
             }}
           >
             {(props) => {
@@ -127,7 +153,6 @@ const ModalAddUsers = ({ itemEdit, filterArrayActiveRoles }) => {
                           type="text"
                           disabled={mutation.isPending}
                         />
-                        {store.error && <MessageError />}
                       </div>
 
                       <div className="relative mb-6">
@@ -159,6 +184,7 @@ const ModalAddUsers = ({ itemEdit, filterArrayActiveRoles }) => {
                             })}
                           </optgroup>
                         </InputSelect>
+                        {store.error && <MessageError />}
                       </div>
                     </div>
                     <div className="modal-action">

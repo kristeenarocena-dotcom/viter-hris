@@ -382,12 +382,19 @@ function isNameExist($object, $name)
     checkExistence($count, "{$name} already exist.");
 }
 
+function isFullNameExist($object, $first_name, $last_name, $msg = "")
+{
+    $query = $object->checkName();
+    $count = $query->rowCount();
+    checkExistence($count, $msg !== "" ? $msg : "{$first_name} {$last_name} already exist.");
+}
+
 // check email
-function isEmailExist($object, $email)
+function isEmailExist($object, $email, $msg = "")
 {
     $query = $object->checkEmail();
     $count = $query->rowCount();
-    checkExistence($count, "{$email} already exist.");
+    checkExistence($count, $msg !== "" ? $msg : "{$email} already exist.");
 }
 
 // check id
@@ -406,11 +413,21 @@ function compareName($object, $name_old, $name)
     }
 }
 
+function compareFullName($object, $first_name_old, $first_name, $last_name_old, $last_name, $msg = "")
+{
+    if (
+        strtolower(trim($first_name_old)) != strtolower(trim($first_name)) ||
+        strtolower(trim($last_name_old)) != strtolower(trim($last_name))
+    ) {
+        isFullNameExist($object, $first_name, $last_name, $msg);
+    }
+}
+
 // compare email
-function compareEmail($object, $email_old, $email)
+function compareEmail($object, $email_old, $email, $msg = "")
 {
     if (strtolower($email_old) != strtolower($email)) {
-        isEmailExist($object, $email);
+        isEmailExist($object, $email, $msg);
     }
 }
 

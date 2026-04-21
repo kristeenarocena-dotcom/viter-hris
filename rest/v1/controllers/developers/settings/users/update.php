@@ -25,14 +25,25 @@ if (array_key_exists("id", $_GET)) {
     $val->users_role_id = trim($data['users_role_id']);
     $val->users_updated = date("Y-m-d H:m:s");
 
+    $users_first_name_old = trim($data['users_first_name_old']);
+    $users_last_name_old = trim($data['users_last_name_old']);
     $users_email_old = $data['users_email_old'];
 
     // validations
     checkId($val->users_aid);
+    compareFullName(
+        $val,
+        $users_first_name_old,
+        $val->users_first_name,
+        $users_last_name_old,
+        $val->users_last_name,
+        "User already exist."
+    );
     compareEmail(
         $val,//models
         $users_email_old,//old record
-        $val->users_email//new record
+        $val->users_email,//new record
+        "Email already used"
     );
 
     $query = checkUpdate($val);

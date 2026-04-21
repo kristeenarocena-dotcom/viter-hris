@@ -25,7 +25,15 @@ export const queryData = (endpoint, method = "get", fd = {}) => {
     .then((res) => res.json())
     .then((result) => {
       if (result.success === false) {
-        throw new Error(result.error?.error || "API Error");
+        const errorMessage =
+          result?.error?.error ||
+          result?.data?.error ||
+          result?.error ||
+          result?.message ||
+          "API Error";
+        const error = new Error(errorMessage);
+        error.response = result;
+        throw error;
       }
       return result;
     });
