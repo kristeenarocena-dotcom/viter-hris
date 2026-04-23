@@ -17,7 +17,6 @@ export const navList = [
     path: `${devNavUrl}/${urlDeveloper}/employees`,
     submenu: "",
   },
- 
   {
     label: "SETTINGS",
     icon: <FaCogs />,
@@ -32,13 +31,18 @@ export const navList = [
         label: "users",
         path: `${devNavUrl}/${urlDeveloper}/settings/users`,
       },
+      // NEW
+      {
+        label: "Department",
+        path: `${devNavUrl}/${urlDeveloper}/settings/department`,
+      },
     ],
   },
-   {
-  label: "Memo",
-  icon: <FaNewspaper />,
-  menu: "memo",
-  path: `${devNavUrl}/${urlDeveloper}/memo`,
-  submenu: "",
-},
+  {
+    label: "Memo",
+    icon: <FaNewspaper />,
+    menu: "memo",
+    path: `${devNavUrl}/${urlDeveloper}/memo`,
+    submenu: "",
+  },
 ];

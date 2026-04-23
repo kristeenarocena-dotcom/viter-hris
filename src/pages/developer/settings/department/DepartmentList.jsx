@@ -1,28 +1,28 @@
 import React from "react";
-import { StoreContext } from "../../../store/StoreContext";
+import { StoreContext } from "../../../../store/StoreContext";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { apiVersion } from "../../../functions/functions-general";
-import { queryDataInfinite } from "../../../functions/custom-hooks/queryDataInfinite";
+import { apiVersion, formatDate } from "../../../../functions/functions-general";
+import { queryDataInfinite } from "../../../../functions/custom-hooks/queryDataInfinite";
 import { useInView } from "react-intersection-observer";
-import NoData from "../../../partials/NoData";
-import ServerError from "../../../partials/ServerError";
-import TableLoading from "../../../partials/TableLoading";
-import FetchingSpinner from "../../../partials/spinners/FetchingSpinner";
-import Loadmore from "../../../partials/Loadmore";
-import Status from "../../../partials/Status";
+import NoData from "../../../../partials/NoData";
+import ServerError from "../../../../partials/ServerError";
+import TableLoading from "../../../../partials/TableLoading";
+import FetchingSpinner from "../../../../partials/spinners/FetchingSpinner";
+import Loadmore from "../../../../partials/Loadmore";
+import Status from "../../../../partials/Status";
 import { FaArchive, FaEdit, FaTrash, FaTrashRestore } from "react-icons/fa";
 import {
   setIsAdd,
   setIsArchive,
   setIsDelete,
   setIsRestore,
-} from "../../../store/StoreAction";
-import ModalArchive from "../../../partials/modals/ModalArchive";
-import ModalRestore from "../../../partials/modals/ModalRestore";
-import ModalDelete from "../../../partials/modals/ModalDelete";
-import SearchBar from "../../../partials/SearchBar";
+} from "../../../../store/StoreAction";
+import ModalArchive from "../../../../partials/modals/ModalArchive";
+import ModalRestore from "../../../../partials/modals/ModalRestore";
+import ModalDelete from "../../../../partials/modals/ModalDelete";
+import SearchBar from "../../../../partials/SearchBar";
 
-const EmployeesList = ({ itemEdit, setItemEdit }) => {
+const DepartmentList = ({ itemEdit, setItemEdit }) => {
   const { store, dispatch } = React.useContext(StoreContext);
 
   // page
@@ -33,7 +33,7 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
   const { ref, inView } = useInView();
   let counter = 1;
 
-  // use if with load more button and search bar
+  // use infinite query with load more / scroll pagination and search bar
   const {
     data: result,
     error,
@@ -43,11 +43,16 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ["employees", search.current.value, store.isSearch, filterData],
+    queryKey: [
+      "department",
+      search.current.value,
+      store.isSearch,
+      filterData,
+    ],
     queryFn: async ({ pageParam = 1 }) =>
       await queryDataInfinite(
         ``, // search endpoint
-        `${apiVersion}/controllers/developers/employees/page.php?start=${pageParam}`, // list endpoint
+        `${apiVersion}/controllers/developers/settings/department/page.php?start=${pageParam}`, // list endpoint
         false,
         {
           filterData,
@@ -98,6 +103,7 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
 
   return (
     <>
+      {/* Filter & Search */}
       <div className="flex items-center justify-between pt-5">
         <div className="relative">
           <label htmlFor="">Status</label>
@@ -117,6 +123,8 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
           onSearch={onSearch}
         />
       </div>
+
+      {/* Table */}
       <div className="relative pt-4 rounded-md">
         {status !== "pending" && isFetching && <FetchingSpinner />}
         <table>
@@ -124,9 +132,9 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
             <tr>
               <th>#</th>
               <th>Status</th>
-              <th>Employee Name</th>
-              <th>Email</th>
-              <th>Department</th> {/* NEW */}
+              <th>Department Name</th>
+              <th>Created</th>
+              <th>Date Updated</th>
               <th></th>
             </tr>
           </thead>
@@ -151,6 +159,7 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
                 </td>
               </tr>
             )}
+
             {result?.pages?.map((page, key) => (
               <React.Fragment key={key}>
                 {page?.data?.map((item, key) => {
@@ -158,20 +167,20 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
                     <tr key={key}>
                       <td>{counter++}</td>
                       <td>
-                        {
-                          <Status
-                            text={`${item.employee_is_active == 1 ? "active" : "inactive"}`}
-                          />
-                        }
+                        <Status
+                          text={`${item.department_is_active == 1 ? "active" : "inactive"}`}
+                        />
+                      </td>
+                      <td>{item.department_name}</td>
+                      <td>
+                        {formatDate(item.department_created, "--", "short-date")}
                       </td>
                       <td>
-                        {item.employee_first_name} {item.employee_last_name}
+                        {formatDate(item.department_updated, "--", "short-date")}
                       </td>
-                      <td>{item.employee_email}</td>
-                      <td>{item.department_name ?? "--"}</td> {/* NEW */}
                       <td>
                         <div className="flex items-center gap-3">
-                          {item.employee_is_active == 1 ? (
+                          {item.department_is_active == 1 ? (
                             <>
                               <button
                                 type="button"
@@ -220,6 +229,7 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
           </tbody>
         </table>
 
+        {/* Scroll Pagination */}
         <div className="loadmore flex justify-center flex-col items-center pb-10">
           <Loadmore
             fetchNextPage={fetchNextPage}
@@ -236,38 +246,38 @@ const EmployeesList = ({ itemEdit, setItemEdit }) => {
 
       {store.isArchive && (
         <ModalArchive
-          mysqlApiArchive={`${apiVersion}/controllers/developers/employees/active.php?id=${itemEdit.employee_aid}`}
+          mysqlApiArchive={`${apiVersion}/controllers/developers/settings/department/active.php?id=${itemEdit.department_aid}`}
           dataItem={itemEdit}
           msg="Are you sure you want to archive this record?"
           successMsg={"Successfully archived"}
-          item={`${itemEdit.employee_first_name} ${itemEdit.employee_last_name}`}
-          queryKey="employees"
+          item={itemEdit.department_name}
+          queryKey="department"
         />
       )}
 
       {store.isRestore && (
         <ModalRestore
-          mysqlApiRestore={`${apiVersion}/controllers/developers/employees/active.php?id=${itemEdit.employee_aid}`}
+          mysqlApiRestore={`${apiVersion}/controllers/developers/settings/department/active.php?id=${itemEdit.department_aid}`}
           dataItem={itemEdit}
           msg="Are you sure you want to restore this record?"
           successMsg={"Successfully restored"}
-          item={`${itemEdit.employee_first_name} ${itemEdit.employee_last_name}`}
-          queryKey="employees"
+          item={itemEdit.department_name}
+          queryKey="department"
         />
       )}
 
       {store.isDelete && (
         <ModalDelete
-          mysqlApiDelete={`${apiVersion}/controllers/developers/employees/employees.php?id=${itemEdit.employee_aid}`}
+          mysqlApiDelete={`${apiVersion}/controllers/developers/settings/department/department.php?id=${itemEdit.department_aid}`}
           dataItem={itemEdit}
           msg="Are you sure you want to delete this record?"
           successMsg={"Successfully deleted"}
-          item={`${itemEdit.employee_first_name} ${itemEdit.employee_last_name}`}
-          queryKey="employees"
+          item={itemEdit.department_name}
+          queryKey="department"
         />
       )}
     </>
   );
 };
 
-export default EmployeesList;
+export default DepartmentList;
