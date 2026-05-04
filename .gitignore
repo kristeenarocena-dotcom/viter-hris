@@ -9,6 +9,7 @@ lerna-debug.log*
 
 #API CREDENTIALS
 rest/v1/core/env.php
+apikey.php
 
 node_modules
 dist
